@@ -84,7 +84,7 @@ class RemoteRobot(TestRobot, RobotRemoteServer, TestLibrary):
           self, RemoteLibrary(robot=self),
           host, port, port_file, allow_stop)
 
-    def _register_keyword(self, name, keyword):
+    def _register_keyword(self, server, name, keyword):
         for funcname, func in [
           (name, keyword),
           (name + '.__repr__', keyword.__repr__),
@@ -92,19 +92,20 @@ class RemoteRobot(TestRobot, RobotRemoteServer, TestLibrary):
           (name + '.getdoc', lambda: keyword.__doc__),
           (name + '.__nonzero__', lambda: True),
           ]:
-            self.register_function(func, funcname)
+            server.register_function(func, funcname)
 
-    def _register_library_keywords(self, lib):
+    def _register_library_keywords(self, server, lib):
         for keyword in TestLibraryInspector(lib):
-            self._register_keyword(keyword.name, self[keyword.name])
+            self._register_keyword(server, keyword.name, self[keyword.name])
 
-    def _register_functions(self):
-        RobotRemoteServer._register_functions(self)
+    def _register_functions(self, server):
+        RobotRemoteServer._register_functions(self, server)
+        print(self._libraries)
         if self.register_keywords:
             for lib in self._libraries.values():
-                self._register_library_keywords(lib)
+                self._register_library_keywords(server, lib)
         if self.introspection:
-            self.register_introspection_functions()
+            server.register_introspection_functions()
 
     def get_keyword_names(self):
         return (self._library.get_keyword_names()
